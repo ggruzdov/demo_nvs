@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: demo_nvs
+  docker:
+    compose:
+      skip:
+        in-tests: false
+      stop:
+        command: down
+      file: compose-db.yml
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:-localhost}:5432/nvs
+    username: user
+    password: password
+    hikari:
+      data-source-properties:
+        reWriteBatchedInserts: true
+  jpa:
+#    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+#        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+        id:
+          optimizer:
+            pooled:
+              preferred: pooled-lo
+#        generate_statistics: true
+
+logging.level:
+    org.hibernate:
+#      SQL: DEBUG
+#      type.descriptor.sql: TRACE
+#      orm.jdbc.batch: TRACE

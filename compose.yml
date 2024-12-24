@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16.4
+    container_name: nvs-db
+    environment:
+      - 'POSTGRES_DB=nvs'
+      - 'POSTGRES_USER=user'
+      - 'POSTGRES_PASSWORD=password'
+    command: "-c log_statement=all"
+    ports:
+      - '5432:5432'
+  demo_nvs:
+    image: nvs/ggruzdov-demo-app:1.0
+    container_name: nvs-app
+    ports:
+      - '8080:8080'
+    environment:
+      - 'POSTGRES_HOST=nvs-db'
+    depends_on:
+      - postgres
+    restart: always
