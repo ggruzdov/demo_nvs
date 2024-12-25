@@ -7,6 +7,8 @@ import com.ggruzdov.demo.apps.demo_nvs.response.AddSlideShowResponse;
 import com.ggruzdov.demo.apps.demo_nvs.response.ImageDetailsResponse;
 import com.ggruzdov.demo.apps.demo_nvs.response.SlideShowDetailsResponse;
 import com.ggruzdov.demo.apps.demo_nvs.service.SlideShowService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,10 +24,12 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Slideshow series")
 public class SlideShowController {
 
     private final SlideShowService slideShowService;
 
+    @Operation(summary = "Get a slideshow with ordered images by creation datetime")
     @GetMapping("/slideShow/{id}/slideshowOrder")
     public SlideShowDetailsResponse getSlideshowSorted(@PathVariable Integer id) {
         log.info("Getting sorted slideshow, slideShowId = {}", id);
@@ -33,6 +37,7 @@ public class SlideShowController {
         return SlideShowDetailsResponse.from(slideShow);
     }
 
+    @Operation(summary = "Simple image search by query params with strict equality. Case insensitive")
     @GetMapping("/images/search")
     public List<ImageDetailsResponse> searchImages(@Valid ImageSearchRequest request) {
         log.info("Searching images, request = {}", request);
@@ -42,6 +47,7 @@ public class SlideShowController {
             .toList();
     }
 
+    @Operation(summary = "Add an image into system")
     @PostMapping("/addImage")
     public AddImageResponse addImage(@Valid @RequestBody AddImageRequest request) {
         log.info("Adding new image {}", request.url());
@@ -49,25 +55,29 @@ public class SlideShowController {
         return new AddImageResponse(image.getId());
     }
 
+    @Operation(summary = "Create a slideshow with a list of images")
     @PostMapping("/addSlideshow")
     public AddSlideShowResponse addSlideShow(@Valid @RequestBody List<AddImageRequest> request) {
-        log.info("Adding new SlideShow, images size = {}", request.size());
+        log.info("Adding new slideshow, images size = {}", request.size());
         var slideShow = slideShowService.create(request);
         return new AddSlideShowResponse(slideShow.getId());
     }
 
+    @Operation(summary = "Delete an image an its relations to slideshows")
     @DeleteMapping("/deleteImage/{id}")
     public void deleteImage(@PathVariable Long id) {
         log.info("Deleting image {}", id);
         slideShowService.deleteImage(id);
     }
 
+    @Operation(summary = "Delete a slideshow. NOTE: all the related images will remain in the system")
     @DeleteMapping("/deleteSlideshow/{id}")
     public void deleteSlideShow(@PathVariable Integer id) {
         log.info("Deleting SlideShow {}", id);
         slideShowService.deleteSlideShow(id);
     }
 
+    @Operation(summary = "Save proof of play event and change active image in a slideshow")
     @PostMapping("/slideShow/{id}/proof-of-play/{imageId}")
     public void saveProofOfPlay(@PathVariable Integer id, @PathVariable Long imageId) {
         log.info("Saving proof of play, slideShowId = {}, imageId = {} ", id, imageId);

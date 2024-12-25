@@ -20,4 +20,7 @@ DB credentials:\
 To stop\
 `docker compose down`
 
+### API Documentation
+http://localhost:8080/swagger-ui/index.html
+
 Some test use cases can be found in `DemoNvsApplicationTests` class.
