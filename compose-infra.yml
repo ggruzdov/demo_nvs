@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16.4
+    container_name: nvs-db
+    environment:
+      - 'POSTGRES_DB=nvs'
+      - 'POSTGRES_USER=user'
+      - 'POSTGRES_PASSWORD=password'
+    command: "-c log_statement=all"
+    ports:
+      - '5432:5432'
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z
+    ports:
+      - "9000:9000"  # API
+      - "9001:9001"  # Console
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: password
+    command: server --console-address ":9001" /data
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  create_buckets:
+    image: minio/mc:RELEASE.2024-11-21T17-21-54Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./images:/images
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 admin password;
+      mc mb myminio/images;
+      mc anonymous set download myminio/images;
+
+      echo 'Copying sample images...\n';
+      mc cp --recursive /images/ myminio/images/;
+      tail -f /dev/null;
+      "

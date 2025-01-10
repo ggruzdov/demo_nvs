@@ -46,12 +46,12 @@ public class GlobalExceptionHandler {
             mediaType = MediaType.APPLICATION_JSON_VALUE,
             schema = @Schema(implementation = ErrorResponse.class),
             examples = @ExampleObject(
-                    value = """
-                        {
-                            "error": "Validation failed",
-                            "message": "url: must not be blank,title: size must be between 3 and 100"
-                        }
-                        """
+                value = """
+                    {
+                        "error": "Validation failed",
+                        "message": "url: must not be blank,title: size must be between 3 and 100"
+                    }
+                    """
             )
         )
     )

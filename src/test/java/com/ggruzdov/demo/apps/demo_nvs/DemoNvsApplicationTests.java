@@ -27,6 +27,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class DemoNvsApplicationTests {
 
+    // All the images are in the project root /images directory
+    private static final String BASE_IMAGE_URL = "http://localhost:9000/images/";
+    private static final String BEACH = BASE_IMAGE_URL + "beach.jpg";
+    private static final String BIRDS = BASE_IMAGE_URL + "birds.jpg";
+    private static final String BUTTERFLY = BASE_IMAGE_URL + "butterfly.jpg";
+    private static final String MOUNTAIN_LAKE = BASE_IMAGE_URL + "mountain-lake.jpg";
+
     @LocalServerPort
     private int port;
 
@@ -57,10 +64,10 @@ class DemoNvsApplicationTests {
         var mountainsImage =
             """
               {
-                "url": "https://nvs.s3.us-east-2.amazonaws.com/images/Mountains.jpg",
+                "url": "%s",
                 "duration": 30
               }
-            """;
+            """.formatted(MOUNTAIN_LAKE);
 
         // When
         var result = restClient
@@ -75,7 +82,7 @@ class DemoNvsApplicationTests {
         assertNotNull(result);
         var image = entityManager.find(Image.class, result.id());
         assertNotNull(result);
-        assertEquals("mountains", image.getName());
+        assertEquals("mountain-lake", image.getName());
     }
 
     @Test
@@ -85,19 +92,19 @@ class DemoNvsApplicationTests {
         """
           [
             {
-              "url": "https://nvs.s3.us-east-2.amazonaws.com/images/Sea.jpg",
+              "url": "%s",
               "duration": 10
             },
             {
-              "url": "https://nvs.s3.us-east-2.amazonaws.com/images/Bird.jpg",
+              "url": "%s",
               "duration": 15
             },
             {
-              "url": "https://nvs.s3.us-east-2.amazonaws.com/images/Wick.jpg",
+              "url": "%s",
               "duration": 20
             }
           ]
-        """;
+        """.formatted(BEACH, BIRDS, BUTTERFLY);
 
         // When
         var result = restClient
@@ -129,18 +136,18 @@ class DemoNvsApplicationTests {
         // Then
         assertNotNull(result);
         assertEquals(3, result.images().size());
-        assertEquals("https://nvs.s3.us-east-2.amazonaws.com/images/Sea.jpg", result.activeImage().url());
+        assertEquals(BEACH, result.activeImage().url());
     }
 
     @Test
     void imageSearch() {
         // Given
-        var image = persistMountainsImage();
+        var image = persistMountainLakeImage();
 
         // When
         var result = restClient
             .get()
-            .uri("http://localhost:%d/images/search?name=mountains".formatted(port))
+            .uri("http://localhost:%d/images/search?name=mountain-lake".formatted(port))
             .retrieve()
             .body(new ParameterizedTypeReference<List<ImageDetailsResponse>>() {});
 
@@ -166,13 +173,13 @@ class DemoNvsApplicationTests {
         // Then
         var result = entityManager.find(SlideShow.class, persistedSlideShow.getId());
         assertNotNull(result);
-        assertEquals("bird", result.getActiveImage().getName());
+        assertEquals("birds", result.getActiveImage().getName());
     }
 
     @Test
     void deleteImage() {
         // Given
-        var image = persistMountainsImage();
+        var image = persistMountainLakeImage();
 
         // When
         restClient
@@ -211,9 +218,9 @@ class DemoNvsApplicationTests {
         });
     }
 
-    private Image persistMountainsImage() {
+    private Image persistMountainLakeImage() {
         return transactionTemplate.execute(tx -> {
-            var image = new Image("https://nvs.s3.us-east-2.amazonaws.com/images/Mountains.jpg", 30);
+            var image = new Image(MOUNTAIN_LAKE, 30);
             entityManager.persist(image);
             return image;
         });
@@ -222,9 +229,9 @@ class DemoNvsApplicationTests {
     private SlideShow persistSlideShow() {
         return transactionTemplate.execute(tx -> {
             var slideShow = new SlideShow();
-            slideShow.addImage(new Image("https://nvs.s3.us-east-2.amazonaws.com/images/Sea.jpg", 10));
-            slideShow.addImage(new Image("https://nvs.s3.us-east-2.amazonaws.com/images/Bird.jpg", 15));
-            slideShow.addImage(new Image("https://nvs.s3.us-east-2.amazonaws.com/images/Wick.jpg", 20));
+            slideShow.addImage(new Image(BEACH, 10));
+            slideShow.addImage(new Image(BIRDS, 15));
+            slideShow.addImage(new Image(BUTTERFLY, 20));
             slideShow.setActiveImage(slideShow.getImages().first());
             entityManager.persist(slideShow);
 

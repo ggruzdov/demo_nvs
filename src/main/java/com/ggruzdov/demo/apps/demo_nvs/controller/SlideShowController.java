@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Slideshow series", description = "API endpoints for managing slideshows and images")
-@RequestMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 public class SlideShowController {
 
     private final SlideShowService slideShowService;
@@ -36,7 +34,7 @@ public class SlideShowController {
         summary = "Get a slideshow with ordered images by creation datetime",
         description = "Retrieves a slideshow by ID with its images ordered by creation date"
     )
-    @GetMapping("/slideShow/{id}/slideshowOrder")
+    @GetMapping(value = "/slideShow/{id}/slideshowOrder", produces = MediaType.APPLICATION_JSON_VALUE)
     public SlideShowDetailsResponse getSlideshowSorted(@PathVariable Integer id) {
         log.info("Getting sorted slideshow, slideShowId = {}", id);
         var slideShow = slideShowService.getOne(id);
@@ -47,7 +45,7 @@ public class SlideShowController {
         summary = "Simple image search by query params with strict equality",
         description = "Search for images using query parameters. The search is case insensitive."
     )
-    @GetMapping("/images/search")
+    @GetMapping(value = "/images/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ImageDetailsResponse> searchImages(@Valid ImageSearchRequest request) {
         log.info("Searching images, request = {}", request);
         return slideShowService.searchImages(request)
@@ -60,7 +58,7 @@ public class SlideShowController {
         summary = "Add an image into system",
         description = "Creates a new image entry in the system with the provided details"
     )
-    @PostMapping(value = "/addImage")
+    @PostMapping(value = "/addImage", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public AddImageResponse addImage(@Valid @RequestBody AddImageRequest request) {
         log.info("Adding new image {}", request.url());
         var image = slideShowService.createImage(request);
@@ -71,7 +69,7 @@ public class SlideShowController {
         summary = "Create a slideshow with a list of images",
         description = "Creates a new slideshow containing the provided list of images"
     )
-    @PostMapping(value = "/addSlideshow")
+    @PostMapping(value = "/addSlideshow", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public AddSlideShowResponse addSlideShow(@Valid @RequestBody List<AddImageRequest> request) {
         log.info("Adding new slideshow, images size = {}", request.size());
         var slideShow = slideShowService.create(request);

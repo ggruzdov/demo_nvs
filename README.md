@@ -1,7 +1,7 @@
 ## Demo application for image management
 
 ### Prerequisites
-Docker and Docker Compose installed
+Unix-like OS with Docker and Docker Compose installed
 
 ### Build application
 Run from the root directory:\
