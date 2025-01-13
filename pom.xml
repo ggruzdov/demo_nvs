@@ -8,11 +8,9 @@
         <version>3.4.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.ggruzdov.demo.apps</groupId>
-    <artifactId>demo_nvs</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <name>demo_nvs</name>
-    <description>demo_nvs</description>
+    <groupId>com.ginthub.ggruzdov</groupId>
+    <artifactId>slideshow</artifactId>
+    <version>1.0.0</version>
 
     <properties>
         <java.version>21</java.version>
