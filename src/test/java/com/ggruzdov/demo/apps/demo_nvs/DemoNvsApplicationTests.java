@@ -73,7 +73,7 @@ class DemoNvsApplicationTests {
         // When
         var result = restClient
             .post()
-            .uri("http://localhost:%d/addImage".formatted(port))
+            .uri("http://localhost:%d/image".formatted(port))
             .contentType(MediaType.APPLICATION_JSON)
             .body(mountainsImage)
             .retrieve()
@@ -110,7 +110,7 @@ class DemoNvsApplicationTests {
         // When
         var result = restClient
             .post()
-            .uri("http://localhost:%d/addSlideshow".formatted(port))
+            .uri("http://localhost:%d/slideshow".formatted(port))
             .contentType(MediaType.APPLICATION_JSON)
             .body(imageList)
             .retrieve()
@@ -131,7 +131,7 @@ class DemoNvsApplicationTests {
         // When
         restClient
             .post()
-            .uri("http://localhost:%d/slideshow/%d/append/image/%d".formatted(port, slideShow.getId(), tree.getId()))
+            .uri("http://localhost:%d/slideshow/%d/append/%d".formatted(port, slideShow.getId(), tree.getId()))
             .retrieve()
             .toEntity(Void.class);
 
@@ -150,7 +150,7 @@ class DemoNvsApplicationTests {
         // When
         var result = restClient
             .get()
-            .uri("http://localhost:%d/slideShow/%d/slideshowOrder".formatted(port, slideShow.getId()))
+            .uri("http://localhost:%d/slideshow/%d".formatted(port, slideShow.getId()))
             .retrieve()
             .body(new ParameterizedTypeReference<SlideShowDetailsResponse>() {});
 
@@ -187,7 +187,7 @@ class DemoNvsApplicationTests {
         // When
         restClient
             .post()
-            .uri("http://localhost:%d/slideShow/%d/proof-of-play/%d".formatted(port, persistedSlideShow.getId(), persistedSlideShow.getActiveImage().getId()))
+            .uri("http://localhost:%d/slideshow/%d/proof-of-play/%d".formatted(port, persistedSlideShow.getId(), persistedSlideShow.getActiveImage().getId()))
             .retrieve()
             .toEntity(Void.class);
 
@@ -205,7 +205,7 @@ class DemoNvsApplicationTests {
         // When
         restClient
             .delete()
-            .uri("http://localhost:%d/deleteImage/%d".formatted(port, mountainLake.getId()))
+            .uri("http://localhost:%d/image/%d".formatted(port, mountainLake.getId()))
             .retrieve()
             .toEntity(Void.class);
 
@@ -222,7 +222,7 @@ class DemoNvsApplicationTests {
         // When
         restClient
             .delete()
-            .uri("http://localhost:%d/deleteSlideshow/%d".formatted(port, persistedSlideShow.getId()))
+            .uri("http://localhost:%d/slideshow/%d".formatted(port, persistedSlideShow.getId()))
             .retrieve()
             .toEntity(Void.class);
 

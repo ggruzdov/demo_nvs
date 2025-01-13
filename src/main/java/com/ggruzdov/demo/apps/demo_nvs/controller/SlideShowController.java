@@ -34,7 +34,7 @@ public class SlideShowController {
         summary = "Get a slideshow with ordered images by creation datetime",
         description = "Retrieves a slideshow by ID with its images ordered by creation date"
     )
-    @GetMapping(value = "/slideShow/{id}/slideshowOrder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/slideshow/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public SlideShowDetailsResponse getSlideshowSorted(@PathVariable Integer id) {
         log.info("Getting sorted slideshow, slideShowId = {}", id);
         var slideShow = slideShowService.getOne(id);
@@ -58,7 +58,7 @@ public class SlideShowController {
         summary = "Add an image into system",
         description = "Creates a new image entry in the system with the provided details"
     )
-    @PostMapping(value = "/addImage", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/image", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public AddImageResponse addImage(@Valid @RequestBody AddImageRequest request) {
         log.info("Adding new image {}", request.url());
         var image = slideShowService.createImage(request);
@@ -69,7 +69,7 @@ public class SlideShowController {
         summary = "Create a slideshow with a list of images",
         description = "Creates a new slideshow containing the provided list of images"
     )
-    @PostMapping(value = "/addSlideshow", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/slideshow", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public AddSlideShowResponse addSlideShow(@Valid @RequestBody List<AddImageRequest> request) {
         log.info("Adding new slideshow, images size = {}", request.size());
         var slideShow = slideShowService.create(request);
@@ -78,19 +78,19 @@ public class SlideShowController {
 
     @Operation(
         summary = "Append an image to a slideshow",
-        description = "Append registered in the system image to an existing slideshow"
+        description = "Append a registered in the system image to an existing slideshow"
     )
-    @PostMapping(value = "/slideshow/{slideshowId}/append/image/{imageId}")
-    public void appendImage(@PathVariable Integer slideshowId, @PathVariable Integer imageId) {
-        log.info("Appending image = {} to slideshow {}", imageId, slideshowId);
-        slideShowService.appendImage(slideshowId, imageId);
+    @PostMapping(value = "/slideshow/{id}/append/{imageId}")
+    public void appendImage(@PathVariable Integer id, @PathVariable Integer imageId) {
+        log.info("Appending image = {} to slideshow {}", imageId, id);
+        slideShowService.appendImage(id, imageId);
     }
 
     @Operation(
         summary = "Delete an image and its relations to slideshows",
         description = "Removes an image and all its associated slideshow relationships"
     )
-    @DeleteMapping("/deleteImage/{id}")
+    @DeleteMapping("/image/{id}")
     public void deleteImage(@PathVariable Long id) {
         log.info("Deleting image {}", id);
         slideShowService.deleteImage(id);
@@ -100,7 +100,7 @@ public class SlideShowController {
         summary = "Delete a slideshow",
         description = "Removes a slideshow while preserving all related images in the system"
     )
-    @DeleteMapping("/deleteSlideshow/{id}")
+    @DeleteMapping("/slideshow/{id}")
     public void deleteSlideShow(@PathVariable Integer id) {
         log.info("Deleting SlideShow {}", id);
         slideShowService.deleteSlideShow(id);
@@ -110,7 +110,7 @@ public class SlideShowController {
         summary = "Save proof of play event and change active image",
         description = "Records a proof of play event and updates the active image in a slideshow"
     )
-    @PostMapping("/slideShow/{id}/proof-of-play/{imageId}")
+    @PostMapping("/slideshow/{id}/proof-of-play/{imageId}")
     public void saveProofOfPlay(@PathVariable Integer id, @PathVariable Long imageId) {
         log.info("Saving proof of play, slideShowId = {}, imageId = {} ", id, imageId);
         slideShowService.saveProofOfPlay(id, imageId);

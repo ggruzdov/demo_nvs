@@ -81,9 +81,9 @@ public class SlideShowService {
         slideShowImageRepository.save(new SlideShowImage(pk));
     }
 
-    // Apparently this method will be under high load and everything
+    // Apparently, this method will be under high load and everything
     // except saving the very event should be processed asynchronously.
-    // However, that is a big topic, let's discuss it in the interview.
+    // However, that is a big topic and a good one to discuss.
     @Transactional
     public void saveProofOfPlay(Integer slideShowId, Long imageId) {
         proofOfPlayRepository.save(new ProofOfPlay(slideShowId, imageId));
