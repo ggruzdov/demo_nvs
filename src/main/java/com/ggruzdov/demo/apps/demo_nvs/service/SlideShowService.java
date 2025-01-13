@@ -4,8 +4,10 @@ import com.ggruzdov.demo.apps.demo_nvs.component.ImageUrlValidator;
 import com.ggruzdov.demo.apps.demo_nvs.model.Image;
 import com.ggruzdov.demo.apps.demo_nvs.model.ProofOfPlay;
 import com.ggruzdov.demo.apps.demo_nvs.model.SlideShow;
+import com.ggruzdov.demo.apps.demo_nvs.model.SlideShowImage;
 import com.ggruzdov.demo.apps.demo_nvs.repository.ImageRepository;
 import com.ggruzdov.demo.apps.demo_nvs.repository.ProofOfPlayRepository;
+import com.ggruzdov.demo.apps.demo_nvs.repository.SlideShowImageRepository;
 import com.ggruzdov.demo.apps.demo_nvs.repository.SlideShowRepository;
 import com.ggruzdov.demo.apps.demo_nvs.request.AddImageRequest;
 import com.ggruzdov.demo.apps.demo_nvs.request.ImageSearchRequest;
@@ -27,6 +29,7 @@ public class SlideShowService {
 
     private final ImageRepository imageRepository;
     private final SlideShowRepository slideShowRepository;
+    private final SlideShowImageRepository slideShowImageRepository;
     private final ProofOfPlayRepository proofOfPlayRepository;
     private final ImageUrlValidator imageUrlValidator;
     private final ExecutorService executorService;
@@ -70,6 +73,12 @@ public class SlideShowService {
             .join();
 
         return slideShow;
+    }
+
+    @Transactional
+    public void appendImage(Integer slideShowId, Integer imageId) {
+        var pk = new SlideShowImage.PK(slideShowId, imageId);
+        slideShowImageRepository.save(new SlideShowImage(pk));
     }
 
     // Apparently this method will be under high load and everything

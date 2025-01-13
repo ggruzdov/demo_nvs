@@ -1,17 +1,11 @@
-# Slideshow demo
+# Introduction
 Once, the project was my test task for a job but while implementing the task I realized it would be a good demo for my portfolio, 
 so I enhanced the project and made it public. The main idea of the project is that a user can add images into the system 
 or create the whole slideshow. Each image has its duration to be displayed. After each image 'swipe' we track the event 
 and store it. It is supposed, that an image is stored somewhere(like AWS S3) beforehand and publicly available 
 so we store only its URL and validate the image availability before storing it into a database. In this demo image samples 
 are stored into MinIO, have a look at `compose-infra.yml`. You can run the project and add additional images via MinIO 
-console to play around.<br>
-Pre-downloaded images:<br>
-http://localhost:9000/images/beach.jpg<br>
-http://localhost:9000/images/birds.jpg<br>
-http://localhost:9000/images/butterfly.jpg<br>
-http://localhost:9000/images/mountain-lake.jpg<br>
-http://localhost:9000/images/tree.jpg
+console to play around.
 
 ## Key Features
 - Image and slideshow CRUD operations
@@ -64,8 +58,15 @@ MinIO console: http://localhost:9001
 Username: admin
 Password: password
 ```
+Pre-downloaded images:<br>
+http://localhost:9000/images/beach.jpg<br>
+http://localhost:9000/images/birds.jpg<br>
+http://localhost:9000/images/butterfly.jpg<br>
+http://localhost:9000/images/mountain-lake.jpg<br>
+http://localhost:9000/images/tree.jpg
 
-API Documentation: http://localhost:8080/swagger-ui/index.html<br>
+API documentation: http://localhost:8080/swagger-ui/index.html<br>
+
 **NOTE**: Since we run the application in Docker, for images stored in MinIO URL must use internal Docker Network DNS,
 i.e. `minio` as a host. For example: `http://minio:9000/images/tree.jpg`
 

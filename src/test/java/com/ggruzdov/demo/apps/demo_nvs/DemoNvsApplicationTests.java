@@ -33,6 +33,7 @@ class DemoNvsApplicationTests {
     private static final String BIRDS = BASE_IMAGE_URL + "birds.jpg";
     private static final String BUTTERFLY = BASE_IMAGE_URL + "butterfly.jpg";
     private static final String MOUNTAIN_LAKE = BASE_IMAGE_URL + "mountain-lake.jpg";
+    private static final String TREE = BASE_IMAGE_URL + "tree.jpg";
 
     @LocalServerPort
     private int port;
@@ -122,6 +123,26 @@ class DemoNvsApplicationTests {
     }
 
     @Test
+    void appendImage() {
+        // Given
+        var slideShow = persistSlideShow();
+        var tree = persistImage(TREE);
+
+        // When
+        restClient
+            .post()
+            .uri("http://localhost:%d/slideshow/%d/append/image/%d".formatted(port, slideShow.getId(), tree.getId()))
+            .retrieve()
+            .toEntity(Void.class);
+
+        // Then
+        var result = entityManager.find(SlideShow.class, slideShow.getId());
+        assertNotNull(result);
+        assertEquals(4, result.getImages().size());
+        assertEquals("tree", result.getImages().last().getName());
+    }
+
+    @Test
     void getSlideShow() {
         // Given
         var slideShow = persistSlideShow();
@@ -142,7 +163,7 @@ class DemoNvsApplicationTests {
     @Test
     void imageSearch() {
         // Given
-        var image = persistMountainLakeImage();
+        var mountainLake = persistImage(MOUNTAIN_LAKE);
 
         // When
         var result = restClient
@@ -154,8 +175,8 @@ class DemoNvsApplicationTests {
         // Then
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(image.getId(), result.getFirst().id());
-        assertEquals(image.getUrl(), result.getFirst().url());
+        assertEquals(mountainLake.getId(), result.getFirst().id());
+        assertEquals(mountainLake.getUrl(), result.getFirst().url());
     }
 
     @Test
@@ -179,17 +200,17 @@ class DemoNvsApplicationTests {
     @Test
     void deleteImage() {
         // Given
-        var image = persistMountainLakeImage();
+        var mountainLake = persistImage(MOUNTAIN_LAKE);
 
         // When
         restClient
             .delete()
-            .uri("http://localhost:%d/deleteImage/%d".formatted(port, image.getId()))
+            .uri("http://localhost:%d/deleteImage/%d".formatted(port, mountainLake.getId()))
             .retrieve()
             .toEntity(Void.class);
 
         // Then
-        assertNull(entityManager.find(Image.class, image.getId()));
+        assertNull(entityManager.find(Image.class, mountainLake.getId()));
     }
 
     @Test
@@ -218,9 +239,9 @@ class DemoNvsApplicationTests {
         });
     }
 
-    private Image persistMountainLakeImage() {
+    private Image persistImage(String url) {
         return transactionTemplate.execute(tx -> {
-            var image = new Image(MOUNTAIN_LAKE, 30);
+            var image = new Image(url, 30);
             entityManager.persist(image);
             return image;
         });

@@ -77,6 +77,16 @@ public class SlideShowController {
     }
 
     @Operation(
+        summary = "Append an image to a slideshow",
+        description = "Append registered in the system image to an existing slideshow"
+    )
+    @PostMapping(value = "/slideshow/{slideshowId}/append/image/{imageId}")
+    public void appendImage(@PathVariable Integer slideshowId, @PathVariable Integer imageId) {
+        log.info("Appending image = {} to slideshow {}", imageId, slideshowId);
+        slideShowService.appendImage(slideshowId, imageId);
+    }
+
+    @Operation(
         summary = "Delete an image and its relations to slideshows",
         description = "Removes an image and all its associated slideshow relationships"
     )

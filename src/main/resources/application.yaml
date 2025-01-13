@@ -16,13 +16,13 @@ spring:
       data-source-properties:
         reWriteBatchedInserts: true # Postgres will rewrite regular insert statements into multi-value ones for batched inserts.
   jpa:
-#    show-sql: true
+    show-sql: true
     open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-#        format_sql: true
+        format_sql: true
         jdbc:
           batch_size: 50
         order_inserts: true # Hibernate will execute insert parent first and only then all the child inserts.
