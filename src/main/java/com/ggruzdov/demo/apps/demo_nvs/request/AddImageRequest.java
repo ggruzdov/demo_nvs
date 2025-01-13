@@ -9,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
     description = "Request to add an Image",
     example = """
             {
-                "url": "https://nvs.s3.us-east-2.amazonaws.com/images/Sea.jpg",
+                "url": "http://minio:9000/images/tree.jpg",
                 "duration": 20
             }
         """

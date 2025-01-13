@@ -10,11 +10,11 @@ spring:
       file: compose-infra.yml
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/nvs
-    username: user
+    username: admin
     password: password
     hikari:
       data-source-properties:
-        reWriteBatchedInserts: true
+        reWriteBatchedInserts: true # Postgres will rewrite regular insert statements into multi-value ones for batched inserts.
   jpa:
 #    show-sql: true
     open-in-view: false
@@ -25,12 +25,12 @@ spring:
 #        format_sql: true
         jdbc:
           batch_size: 50
-        order_inserts: true
+        order_inserts: true # Hibernate will execute insert parent first and only then all the child inserts.
         order_updates: true
         id:
           optimizer:
             pooled:
-              preferred: pooled-lo
+              preferred: pooled-lo # to reduce the database round trip to get the ID(for batches)
 #        generate_statistics: true
 
 logging.level:
