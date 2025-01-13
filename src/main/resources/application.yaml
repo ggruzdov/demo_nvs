@@ -9,7 +9,7 @@ spring:
         command: down
       file: compose-infra.yml
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/nvs
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/slideshow
     username: admin
     password: password
     hikari:

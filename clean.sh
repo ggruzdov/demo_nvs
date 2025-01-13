@@ -1,1 +1,1 @@
-docker rmi nvs/ggruzdov-demo-app:1.0
+docker rmi slideshow/ggruzdov-demo-app:1.0

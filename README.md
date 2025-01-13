@@ -16,7 +16,7 @@ console to play around.
 - Parallel image validation
 
 ## Technical Implementation
-- PostgreSQL as the primary database
+- Postgres as the primary database
 - Flyway migrations
 - Spring Boot 3.4
 - Java 21

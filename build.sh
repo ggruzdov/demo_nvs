@@ -1,2 +1,2 @@
 ./mvnw clean package -DskipTests=true &&
-docker build --no-cache -t nvs/ggruzdov-demo-app:1.0 .
+docker build --no-cache -t slideshow/ggruzdov-demo-app:1.0 .

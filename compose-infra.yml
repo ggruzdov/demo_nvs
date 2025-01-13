@@ -3,7 +3,7 @@ services:
     image: postgres:16.4
     container_name: nvs-db
     environment:
-      - 'POSTGRES_DB=nvs'
+      - 'POSTGRES_DB=slideshow'
       - 'POSTGRES_USER=admin'
       - 'POSTGRES_PASSWORD=password'
     command: "-c log_statement=all"
