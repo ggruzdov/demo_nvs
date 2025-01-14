@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
@@ -25,7 +26,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "images")
-public class Image implements Comparable<Image> {
+public class Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "images_id_seq")
@@ -44,18 +45,14 @@ public class Image implements Comparable<Image> {
     @ManyToMany(mappedBy = "images", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private Set<SlideShow> slideShows;
 
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
     private Instant createdAt;
 
     public Image(String url, Integer duration) {
         this.url = url;
         this.duration = duration;
         this.name = url.substring(url.lastIndexOf('/') + 1).split("\\.")[0].toLowerCase();
-        this.createdAt = Instant.now();
-    }
-
-    @Override
-    public int compareTo(Image image) {
-        return this.createdAt.compareTo(image.createdAt);
     }
 
     @Override

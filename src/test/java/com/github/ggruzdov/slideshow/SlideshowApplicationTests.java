@@ -5,8 +5,9 @@ import com.github.ggruzdov.slideshow.model.SlideShow;
 import com.github.ggruzdov.slideshow.response.AddImageResponse;
 import com.github.ggruzdov.slideshow.response.AddSlideShowResponse;
 import com.github.ggruzdov.slideshow.response.ImageDetailsResponse;
-import com.github.ggruzdov.slideshow.response.SlideShowDetailsResponse;
+import com.github.ggruzdov.slideshow.response.OrderedSlideShowDetailsResponse;
 import jakarta.persistence.EntityManager;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,6 +48,11 @@ class SlideshowApplicationTests {
 
     @Autowired
     private TransactionTemplate transactionTemplate;
+
+    @BeforeAll
+    static void setTimeZone() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    }
 
     @SuppressWarnings("SqlWithoutWhere")
     @BeforeEach
@@ -125,8 +132,8 @@ class SlideshowApplicationTests {
     @Test
     void appendImage() {
         // Given
-        var slideShow = persistSlideShow();
         var tree = persistImage(TREE);
+        var slideShow = persistSlideShow();
 
         // When
         restClient
@@ -139,25 +146,33 @@ class SlideshowApplicationTests {
         var result = entityManager.find(SlideShow.class, slideShow.getId());
         assertNotNull(result);
         assertEquals(4, result.getImages().size());
-        assertEquals("tree", result.getImages().last().getName());
+        //assertEquals("tree", result.getImages().);
     }
 
     @Test
-    void getSlideShow() {
+    void getOrderedSlideShow() {
         // Given
+        var tree = persistImage(TREE);
         var slideShow = persistSlideShow();
 
-        // When
+        // When(append image first to check addition order)
+        restClient
+            .post()
+            .uri("http://localhost:%d/slideshow/%d/append/%d".formatted(port, slideShow.getId(), tree.getId()))
+            .retrieve()
+            .toEntity(Void.class);
+
         var result = restClient
             .get()
-            .uri("http://localhost:%d/slideshow/%d".formatted(port, slideShow.getId()))
+            .uri("http://localhost:%d/slideshow/%d/ordered".formatted(port, slideShow.getId()))
             .retrieve()
-            .body(new ParameterizedTypeReference<SlideShowDetailsResponse>() {});
+            .body(new ParameterizedTypeReference<OrderedSlideShowDetailsResponse>() {});
 
         // Then
         assertNotNull(result);
-        assertEquals(3, result.images().size());
+        assertEquals(4, result.images().size());
         assertEquals(BEACH, result.activeImage().url());
+        assertEquals(TREE, result.images().getLast().url());
     }
 
     @Test
@@ -214,6 +229,25 @@ class SlideshowApplicationTests {
     }
 
     @Test
+    void deleteImageWhichIsActiveImageInSlideShow() {
+        // Given
+        var slideShow = persistSlideShow();
+        var activeImage = slideShow.getActiveImage();
+
+        // When
+        restClient
+            .delete()
+            .uri("http://localhost:%d/image/%d".formatted(port, activeImage.getId()))
+            .retrieve()
+            .toEntity(Void.class);
+
+        // Then
+        assertNull(entityManager.find(Image.class, activeImage.getId()));
+        var result = entityManager.find(SlideShow.class, slideShow.getId());
+        assertEquals("birds", result.getActiveImage().getName());
+    }
+
+    @Test
     void deleteSlideShow() {
         // Given
         var persistedSlideShow = persistSlideShow();
@@ -253,7 +287,7 @@ class SlideshowApplicationTests {
             slideShow.addImage(new Image(BEACH, 10));
             slideShow.addImage(new Image(BIRDS, 15));
             slideShow.addImage(new Image(BUTTERFLY, 20));
-            slideShow.setActiveImage(slideShow.getImages().first());
+            slideShow.setActiveImage(slideShow.getImages().stream().findFirst().orElseThrow());
             entityManager.persist(slideShow);
 
             return slideShow;

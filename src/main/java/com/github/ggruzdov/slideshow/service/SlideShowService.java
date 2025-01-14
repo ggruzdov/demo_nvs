@@ -11,6 +11,7 @@ import com.github.ggruzdov.slideshow.repository.SlideShowImageRepository;
 import com.github.ggruzdov.slideshow.repository.SlideShowRepository;
 import com.github.ggruzdov.slideshow.request.AddImageRequest;
 import com.github.ggruzdov.slideshow.request.ImageSearchRequest;
+import com.github.ggruzdov.slideshow.response.OrderedSlideShowDetailsResponse;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +35,12 @@ public class SlideShowService {
     private final ImageUrlValidator imageUrlValidator;
     private final ExecutorService executorService;
 
-    public SlideShow getOne(Integer slideShowId) {
-         return slideShowRepository.findById(slideShowId)
-             .orElseThrow(() -> new EntityNotFoundException("SlideShow with id " + slideShowId + " not found"));
+    public OrderedSlideShowDetailsResponse getOrderedSlideShow(Integer slideShowId) {
+        var orderedImages = imageRepository.findAllSortedByAdditionDateAsc(slideShowId);
+        var activeImage = slideShowRepository.getActiveImage(slideShowId);
+        var orderedActiveImage = orderedImages.stream().filter(it -> it.id().equals(activeImage.getId())).findFirst().orElseThrow();
+
+        return new OrderedSlideShowDetailsResponse(slideShowId, orderedActiveImage, orderedImages);
     }
 
     public List<Image> searchImages(ImageSearchRequest request) {
@@ -55,19 +59,21 @@ public class SlideShowService {
     public SlideShow create(List<AddImageRequest> request) {
         var slideShow = new SlideShow();
 
-        // For now, we create SlideShow when all images are valid, otherwise reject request
-        var completableFutures = request
-            .stream()
-            .map(it -> CompletableFuture.runAsync(() -> {
-                    imageUrlValidator.validate(it.url());
-                    slideShow.addImage(new Image(it.url(), it.duration()));
-                }, executorService).orTimeout(30, TimeUnit.SECONDS)
-            )
-            .toArray(CompletableFuture[]::new);
+        // For now, we create a SlideShow when all its images are valid, otherwise reject request.
+        var completableFutures = new CompletableFuture[request.size()];
+        for (int i = 0; i < request.size(); i++) {
+            var currImg = request.get(i);
+            completableFutures[i] = CompletableFuture.runAsync(
+                () -> imageUrlValidator.validate(currImg.url()), executorService
+            ).orTimeout(30, TimeUnit.SECONDS);
+
+            // We want to preserve images order in which they were passed
+            slideShow.addImage(new Image(currImg.url(), currImg.duration()));
+        }
 
         CompletableFuture.allOf(completableFutures)
             .thenRun(() -> {
-                slideShow.setActiveImage(slideShow.getImages().first());
+                slideShow.setActiveImage(slideShow.getImages().iterator().next());
                 slideShowRepository.save(slideShow);
             })
             .join();
@@ -76,7 +82,7 @@ public class SlideShowService {
     }
 
     @Transactional
-    public void appendImage(Integer slideShowId, Integer imageId) {
+    public void appendImage(Integer slideShowId, Long imageId) {
         var pk = new SlideShowImage.PK(slideShowId, imageId);
         slideShowImageRepository.save(new SlideShowImage(pk));
     }
@@ -86,8 +92,6 @@ public class SlideShowService {
     // However, that is a big topic and a good one to discuss.
     @Transactional
     public void saveProofOfPlay(Integer slideShowId, Long imageId) {
-        proofOfPlayRepository.save(new ProofOfPlay(slideShowId, imageId));
-
         var slideShow = slideShowRepository.findByIdForUpdate(slideShowId).orElseThrow(
             () -> new EntityNotFoundException("Slide show with id " + slideShowId + " not found")
         );
@@ -102,14 +106,13 @@ public class SlideShowService {
             }
         }
 
-        var nextImage = slideShow.getNextImage(activeImage);
-        if (nextImage == null) {
-            log.info("SlideShow {} reached its end, starting new circle", slideShowId);
-            slideShow.setActiveImage(slideShow.getImages().first());
-        } else {
-            slideShow.setActiveImage(nextImage);
-            log.info("Slide show {} next imageId is: {}", slideShowId, nextImage.getId());
-        }
+        var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShowId, activeImage.getId());
+
+        log.info("SlideShow {} next imageId is: {}", slideShowId, nextSlideShowImage.getPk().getImageId());
+        var nextImage = slideShow.getImage(nextSlideShowImage.getPk().getImageId());
+
+        slideShow.setActiveImage(nextImage);
+        proofOfPlayRepository.save(new ProofOfPlay(slideShowId, imageId));
     }
 
     @Transactional
@@ -121,7 +124,12 @@ public class SlideShowService {
         }
 
         image.getSlideShows().forEach(slideShow -> {
-            slideShow.removeImage(image);
+            if (slideShow.getActiveImage().equals(image)) {
+                var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShow.getId(), image.getId());
+                slideShow.setActiveImage(imageRepository.getReferenceById(nextSlideShowImage.getPk().getImageId()));
+            }
+            slideShow.getImages().remove(image);
+
             if (slideShow.getImages().isEmpty()) {
                 slideShowRepository.delete(slideShow);
             }
@@ -135,5 +143,14 @@ public class SlideShowService {
     @Transactional
     public void deleteSlideShow(Integer id) {
         slideShowRepository.deleteById(id);
+    }
+
+    private SlideShowImage getNexSlideShowImageOrElseFirst(Integer slideShowId, Long imageId) {
+        return slideShowImageRepository
+            .getNext(slideShowId, imageId)
+            .orElseGet(() -> {
+                log.info("SlideShow {} reached its end, starting new circle", slideShowId);
+                return slideShowImageRepository.findFirstByPkSlideShowIdOrderByCreatedAt(slideShowId);
+            });
     }
 }

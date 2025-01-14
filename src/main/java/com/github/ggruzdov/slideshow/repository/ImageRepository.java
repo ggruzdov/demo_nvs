@@ -1,6 +1,7 @@
 package com.github.ggruzdov.slideshow.repository;
 
 import com.github.ggruzdov.slideshow.model.Image;
+import com.github.ggruzdov.slideshow.response.OrderedImageDetailsResponse;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -15,4 +16,11 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
     @Query("select i from Image i left join fetch i.slideShows where i.id = :id")
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Image findByIdForUpdate(Long id);
+
+    @Query(
+        "select new com.github.ggruzdov.slideshow.response.OrderedImageDetailsResponse(i.id, i.url, i.duration, ssi.createdAt, i.createdAt) " +
+        "from Image i join SlideShowImage ssi on i.id = ssi.pk.imageId where ssi.pk.slideShowId = :slideShowId " +
+        "order by ssi.createdAt"
+    )
+    List<OrderedImageDetailsResponse> findAllSortedByAdditionDateAsc(Integer slideShowId);
 }

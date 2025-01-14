@@ -20,7 +20,9 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -44,7 +46,7 @@ public class SlideShow {
         name = "slide_shows_images",
         joinColumns = @JoinColumn(name = "slide_show_id"),
         inverseJoinColumns = @JoinColumn(name = "image_id"))
-    private SortedSet<Image> images = new TreeSet<>();
+    private Set<Image> images = new LinkedHashSet<>();
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
@@ -54,30 +56,30 @@ public class SlideShow {
         return images.stream().filter(image -> image.getId().equals(imageId)).findFirst().orElse(null);
     }
 
-    public Image getNextImage(Image image) {
-        var imagesTail = images.tailSet(image).iterator();
-
-        if (imagesTail.hasNext()) {
-            imagesTail.next(); // skip argument image
-            if (imagesTail.hasNext()) {
-                return imagesTail.next();
-            }
-        }
-
-        return null;
-    }
+//    public Image getNextImage(Image image) {
+//        var imagesTail = images.tailSet(image).iterator();
+//
+//        if (imagesTail.hasNext()) {
+//            imagesTail.next(); // skip argument image
+//            if (imagesTail.hasNext()) {
+//                return imagesTail.next();
+//            }
+//        }
+//
+//        return null;
+//    }
 
     public void addImage(Image image) {
         images.add(image);
     }
 
-    public void removeImage(Image image) {
-        if (activeImage.equals(image)) {
-            activeImage = getNextImage(activeImage);
-        }
-
-        images.remove(image);
-    }
+//    public void removeImage(Image image) {
+//        if (activeImage.equals(image)) {
+//            activeImage = getNextImage(activeImage);
+//        }
+//
+//        images.remove(image);
+//    }
 
     // Since we do not have more than one transient(not persisted)
     // SlideShow in one moment of time using Object methods is suitable.

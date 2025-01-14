@@ -5,7 +5,7 @@ import com.github.ggruzdov.slideshow.request.ImageSearchRequest;
 import com.github.ggruzdov.slideshow.response.AddImageResponse;
 import com.github.ggruzdov.slideshow.response.AddSlideShowResponse;
 import com.github.ggruzdov.slideshow.response.ImageDetailsResponse;
-import com.github.ggruzdov.slideshow.response.SlideShowDetailsResponse;
+import com.github.ggruzdov.slideshow.response.OrderedSlideShowDetailsResponse;
 import com.github.ggruzdov.slideshow.service.SlideShowService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,19 +31,18 @@ public class SlideShowController {
     private final SlideShowService slideShowService;
 
     @Operation(
-        summary = "Get a slideshow with ordered images by creation datetime",
-        description = "Retrieves a slideshow by ID with its images ordered by creation date"
+        summary = "Get a slideshow with ordered images by addition date",
+        description = "Retrieves a slideshow by ID with its images ordered by addition date"
     )
-    @GetMapping(value = "/slideshow/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public SlideShowDetailsResponse getSlideshowSorted(@PathVariable Integer id) {
-        log.info("Getting sorted slideshow, slideShowId = {}", id);
-        var slideShow = slideShowService.getOne(id);
-        return SlideShowDetailsResponse.from(slideShow);
+    @GetMapping(value = "/slideshow/{id}/ordered", produces = MediaType.APPLICATION_JSON_VALUE)
+    public OrderedSlideShowDetailsResponse getSlideshowOrdered(@PathVariable Integer id) {
+        log.info("Getting ordered slideshow, id = {}", id);
+         return slideShowService.getOrderedSlideShow(id);
     }
 
     @Operation(
         summary = "Simple image search by query params with strict equality",
-        description = "Search for images using query parameters. The search is case insensitive."
+        description = "Search for images using query parameters. The search is case insensitive"
     )
     @GetMapping(value = "/images/search", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ImageDetailsResponse> searchImages(@Valid ImageSearchRequest request) {
@@ -81,7 +80,7 @@ public class SlideShowController {
         description = "Append a registered in the system image to an existing slideshow"
     )
     @PostMapping(value = "/slideshow/{id}/append/{imageId}")
-    public void appendImage(@PathVariable Integer id, @PathVariable Integer imageId) {
+    public void appendImage(@PathVariable Integer id, @PathVariable Long imageId) {
         log.info("Appending image = {} to slideshow {}", imageId, id);
         slideShowService.appendImage(id, imageId);
     }
