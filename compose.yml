@@ -2,13 +2,13 @@ include:
   - compose-infra.yml
 
 services:
-  demo_nvs:
+  slideshow:
     image: slideshow/ggruzdov-demo-app:1.0
     container_name: slideshow
     ports:
       - '8080:8080'
     environment:
-      - 'POSTGRES_HOST=nvs-db'
+      - 'POSTGRES_HOST=slideshow-db'
     depends_on:
       - postgres
     restart: always

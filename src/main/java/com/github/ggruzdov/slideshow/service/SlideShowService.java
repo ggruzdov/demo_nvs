@@ -92,6 +92,30 @@ public class SlideShowService {
         slideShowImageRepository.save(new SlideShowImage(pk));
     }
 
+    @Transactional
+    public void removeImage(Integer slideShowId, Integer imageId) {
+        var ssiPk = new SlideShowImage.PK(slideShowId, imageId);
+        var slideShowImage = slideShowImageRepository.findByIdForUpdate(ssiPk);
+        if (slideShowImage == null) {
+            log.info("SlideShowImage {} not found", ssiPk);
+            return;
+        }
+
+        if (slideShowImage.isCurrent()) {
+            var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShowId, imageId);
+            // Here we see that there is only one image in the SlideShow so we can remove it as well
+            if (nextSlideShowImage.equals(slideShowImage)) {
+                slideShowImageRepository.deleteById(ssiPk);
+                slideShowImageRepository.flush();
+                slideShowRepository.deleteById(slideShowId);
+            } else {
+                nextSlideShowImage.setCurrent(true);
+            }
+        } else {
+            slideShowImageRepository.deleteById(ssiPk);
+        }
+    }
+
     // Apparently, this method will be under high load and everything
     // except saving the very event should be processed asynchronously.
     // However, that is a big topic and a good one to discuss.

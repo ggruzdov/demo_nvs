@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16.4
-    container_name: nvs-db
+    container_name: slideshow-db
     environment:
       - 'POSTGRES_DB=slideshow'
       - 'POSTGRES_USER=admin'

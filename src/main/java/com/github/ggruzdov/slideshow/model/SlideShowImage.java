@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -47,6 +48,7 @@ public class SlideShowImage {
         return pk.getImageId();
     }
 
+    @ToString
     @Getter
     @Setter
     @AllArgsConstructor

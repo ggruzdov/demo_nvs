@@ -26,8 +26,9 @@ Additional requirements:
 - Swagger API documentation
 - Hibernate batch processing
 - SQL window functions
+- Pessimistic locks
 - CompletableFuture usage for image validation parallelization
-- MinIO as the storage for image samples
+- MinIO as storage of image samples
 
 ## Getting Started
 

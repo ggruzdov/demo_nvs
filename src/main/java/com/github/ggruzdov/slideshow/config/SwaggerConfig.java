@@ -15,7 +15,7 @@ public class SwaggerConfig {
     public OpenAPI openAPI() {
         return new OpenAPI()
             .info(new Info()
-                .title("Demo NVS API")
+                .title("Slideshow API")
                 .version("1.0")
                 .description("API documentation for the image management and slideshow operations"))
             .servers(List.of(

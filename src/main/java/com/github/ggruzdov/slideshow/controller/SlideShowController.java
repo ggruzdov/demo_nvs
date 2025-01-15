@@ -86,6 +86,16 @@ public class SlideShowController {
     }
 
     @Operation(
+        summary = "Remove an image from a slideshow",
+        description = "Remove a registered in the system image from an existing slideshow"
+    )
+    @PostMapping(value = "/slideshow/{id}/remove/{imageId}")
+    public void removeImage(@PathVariable Integer id, @PathVariable Integer imageId) {
+        log.info("Remove image = {} from slideshow {}", imageId, id);
+        slideShowService.removeImage(id, imageId);
+    }
+
+    @Operation(
         summary = "Delete an image and its relations to slideshows",
         description = "Removes an image and all its associated slideshow relationships"
     )

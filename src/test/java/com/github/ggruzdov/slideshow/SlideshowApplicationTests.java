@@ -154,6 +154,24 @@ class SlideshowApplicationTests {
     }
 
     @Test
+    void removeImage() {
+        // Given
+        var slideShow = persistSingleImageSlideShow();
+        var currentSlideShowImage = getCurrentSlideShowImage(slideShow.getId());
+
+        // When
+        restClient
+            .post()
+            .uri("http://localhost:%d/slideshow/%d/remove/%d".formatted(port, slideShow.getId(), currentSlideShowImage.getImageId()))
+            .retrieve()
+            .toEntity(Void.class);
+
+        // Then
+        assertEquals(0, getSortedSlideShowImages(slideShow.getId()).size());
+        assertNull(entityManager.find(SlideShow.class, slideShow.getId()));
+    }
+
+    @Test
     void getOrderedSlideShow() {
         // Given
         var tree = persistImage(TREE);
