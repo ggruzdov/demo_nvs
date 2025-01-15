@@ -1,12 +1,10 @@
 package com.github.ggruzdov.slideshow.model;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -18,7 +16,6 @@ import org.hibernate.proxy.HibernateProxy;
 
 import java.time.Instant;
 import java.util.Objects;
-import java.util.Set;
 
 @Getter
 @Setter
@@ -41,9 +38,6 @@ public class Image {
 
     @Column(nullable = false)
     private Integer duration;
-
-    @ManyToMany(mappedBy = "images", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    private Set<SlideShow> slideShows;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

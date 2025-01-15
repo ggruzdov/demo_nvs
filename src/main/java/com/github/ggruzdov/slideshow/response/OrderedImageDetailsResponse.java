@@ -6,6 +6,7 @@ public record OrderedImageDetailsResponse(
     Long id,
     String url,
     Integer duration,
+    boolean isCurrent,
     Instant appendedAt,
     Instant createdAt
 ) {

@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -37,10 +38,7 @@ public class SlideShowService {
 
     public OrderedSlideShowDetailsResponse getOrderedSlideShow(Integer slideShowId) {
         var orderedImages = imageRepository.findAllSortedByAdditionDateAsc(slideShowId);
-        var activeImage = slideShowRepository.getActiveImage(slideShowId);
-        var orderedActiveImage = orderedImages.stream().filter(it -> it.id().equals(activeImage.getId())).findFirst().orElseThrow();
-
-        return new OrderedSlideShowDetailsResponse(slideShowId, orderedActiveImage, orderedImages);
+        return new OrderedSlideShowDetailsResponse(slideShowId, orderedImages);
     }
 
     public List<Image> searchImages(ImageSearchRequest request) {
@@ -57,7 +55,7 @@ public class SlideShowService {
 
     @Transactional
     public SlideShow create(List<AddImageRequest> request) {
-        var slideShow = new SlideShow();
+        var images = new ArrayList<Image>(request.size());
 
         // For now, we create a SlideShow when all its images are valid, otherwise reject request.
         var completableFutures = new CompletableFuture[request.size()];
@@ -68,13 +66,20 @@ public class SlideShowService {
             ).orTimeout(30, TimeUnit.SECONDS);
 
             // We want to preserve images order in which they were passed
-            slideShow.addImage(new Image(currImg.url(), currImg.duration()));
+            images.add(new Image(currImg.url(), currImg.duration()));
         }
 
+        var slideShow = new SlideShow();
         CompletableFuture.allOf(completableFutures)
             .thenRun(() -> {
-                slideShow.setActiveImage(slideShow.getImages().iterator().next());
                 slideShowRepository.save(slideShow);
+                imageRepository.saveAll(images);
+                var slideShowImages = images
+                    .stream()
+                    .map(it -> new SlideShowImage(new SlideShowImage.PK(slideShow.getId(), it.getId())))
+                    .toList();
+                slideShowImages.getFirst().setCurrent(true);
+                slideShowImageRepository.saveAll(slideShowImages);
             })
             .join();
 
@@ -92,26 +97,30 @@ public class SlideShowService {
     // However, that is a big topic and a good one to discuss.
     @Transactional
     public void saveProofOfPlay(Integer slideShowId, Long imageId) {
-        var slideShow = slideShowRepository.findByIdForUpdate(slideShowId).orElseThrow(
+        slideShowRepository.findByIdForUpdate(slideShowId).orElseThrow(
             () -> new EntityNotFoundException("Slide show with id " + slideShowId + " not found")
         );
 
-        var activeImage = slideShow.getActiveImage();
-        if (!activeImage.getId().equals(imageId)) {
-            log.warn("Active image mismatch detected, activeImage id = {}, played imageId = {}", activeImage.getId(), imageId);
-            activeImage = slideShow.getImage(imageId);
-            if (activeImage == null) {
-                log.warn("ImageId = {} doesn't belong to SlideShow with id {}", imageId, slideShowId);
-                return;
-            }
+        var playedSlideShowImage = slideShowImageRepository.findById(new SlideShowImage.PK(slideShowId, imageId)).orElse(null);
+        if (playedSlideShowImage == null) {
+            log.warn("ImageId = {} doesn't belong to SlideShow with id {}", imageId, slideShowId);
+            return;
         }
 
-        var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShowId, activeImage.getId());
+        if (!playedSlideShowImage.isCurrent()) {
+            var currentSlideShowImage = slideShowImageRepository.findByPkSlideShowIdAndIsCurrentTrue(slideShowId);
+            log.warn(
+                "Active image mismatch detected, activeImage id = {}, played imageId = {}",
+                currentSlideShowImage.getPk().getImageId(), imageId
+            );
+            currentSlideShowImage.setCurrent(false);
+        }
+
+        var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShowId, imageId);
 
         log.info("SlideShow {} next imageId is: {}", slideShowId, nextSlideShowImage.getPk().getImageId());
-        var nextImage = slideShow.getImage(nextSlideShowImage.getPk().getImageId());
-
-        slideShow.setActiveImage(nextImage);
+        playedSlideShowImage.setCurrent(false);
+        nextSlideShowImage.setCurrent(true);
         proofOfPlayRepository.save(new ProofOfPlay(slideShowId, imageId));
     }
 
@@ -123,17 +132,21 @@ public class SlideShowService {
             return;
         }
 
-        image.getSlideShows().forEach(slideShow -> {
-            if (slideShow.getActiveImage().equals(image)) {
-                var nextSlideShowImage = getNexSlideShowImageOrElseFirst(slideShow.getId(), image.getId());
-                slideShow.setActiveImage(imageRepository.getReferenceById(nextSlideShowImage.getPk().getImageId()));
-            }
-            slideShow.getImages().remove(image);
-
-            if (slideShow.getImages().isEmpty()) {
-                slideShowRepository.delete(slideShow);
+        var slideShowImages = slideShowImageRepository.findAllByPkImageId(id);
+        slideShowImages.forEach(ssi -> {
+            if (ssi.isCurrent()) {
+                var nextSlideShowImage = getNexSlideShowImageOrElseFirst(ssi.getPk().getSlideShowId(), image.getId());
+                if (!nextSlideShowImage.getImageId().equals(id)) {
+                    nextSlideShowImage.setCurrent(true);
+                }
             }
         });
+
+        if (!slideShowImages.isEmpty()) {
+            slideShowImageRepository.deleteAllByPkImageId(id);
+            var slideShowIds = slideShowImages.stream().map(SlideShowImage::getSlideShowId).toList();
+            slideShowRepository.deleteIfEmpty(slideShowIds);
+        }
 
         imageRepository.delete(image);
     }
@@ -142,6 +155,7 @@ public class SlideShowService {
     // However, we do not remove images since they have to remain even if they don't belong to another SlideShows.
     @Transactional
     public void deleteSlideShow(Integer id) {
+        slideShowImageRepository.deleteAllByPkSlideShowId(id);
         slideShowRepository.deleteById(id);
     }
 

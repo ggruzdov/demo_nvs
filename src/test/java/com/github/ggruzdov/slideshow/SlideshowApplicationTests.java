@@ -2,6 +2,7 @@ package com.github.ggruzdov.slideshow;
 
 import com.github.ggruzdov.slideshow.model.Image;
 import com.github.ggruzdov.slideshow.model.SlideShow;
+import com.github.ggruzdov.slideshow.model.SlideShowImage;
 import com.github.ggruzdov.slideshow.response.AddImageResponse;
 import com.github.ggruzdov.slideshow.response.AddSlideShowResponse;
 import com.github.ggruzdov.slideshow.response.ImageDetailsResponse;
@@ -125,8 +126,11 @@ class SlideshowApplicationTests {
 
         // Then
         assertNotNull(result);
-        var slideShow = entityManager.find(SlideShow.class, result.id());
-        assertEquals(3, slideShow.getImages().size());
+        assertNotNull(entityManager.find(SlideShow.class, result.id()));
+
+        var slideShowImages = getSortedSlideShowImages(result.id());
+        assertEquals(3, slideShowImages.size());
+        assertTrue(slideShowImages.getFirst().isCurrent());
     }
 
     @Test
@@ -143,10 +147,10 @@ class SlideshowApplicationTests {
             .toEntity(Void.class);
 
         // Then
-        var result = entityManager.find(SlideShow.class, slideShow.getId());
-        assertNotNull(result);
-        assertEquals(4, result.getImages().size());
-        //assertEquals("tree", result.getImages().);
+        var slideShowImages = getSortedSlideShowImages(slideShow.getId());
+        assertEquals(4, slideShowImages.size());
+        var lastImageId = slideShowImages.getLast().getImageId();
+        assertEquals("tree", getImage(lastImageId).getName());
     }
 
     @Test
@@ -171,7 +175,7 @@ class SlideshowApplicationTests {
         // Then
         assertNotNull(result);
         assertEquals(4, result.images().size());
-        assertEquals(BEACH, result.activeImage().url());
+        assertTrue(result.images().stream().anyMatch(it -> it.isCurrent() && BEACH.equals(it.url())));
         assertEquals(TREE, result.images().getLast().url());
     }
 
@@ -197,19 +201,19 @@ class SlideshowApplicationTests {
     @Test
     void saveProofOfPlay() {
         // Given
-        var persistedSlideShow = persistSlideShow();
+        var slideShow = persistSlideShow();
+        var currentSlideShowImage = getCurrentSlideShowImage(slideShow.getId());
 
         // When
         restClient
             .post()
-            .uri("http://localhost:%d/slideshow/%d/proof-of-play/%d".formatted(port, persistedSlideShow.getId(), persistedSlideShow.getActiveImage().getId()))
+            .uri("http://localhost:%d/slideshow/%d/proof-of-play/%d".formatted(port, slideShow.getId(), currentSlideShowImage.getImageId()))
             .retrieve()
             .toEntity(Void.class);
 
         // Then
-        var result = entityManager.find(SlideShow.class, persistedSlideShow.getId());
-        assertNotNull(result);
-        assertEquals("birds", result.getActiveImage().getName());
+        var result = getCurrentSlideShowImage(slideShow.getId());
+        assertEquals("birds", getImage(result.getImageId()).getName());
     }
 
     @Test
@@ -225,52 +229,70 @@ class SlideshowApplicationTests {
             .toEntity(Void.class);
 
         // Then
-        assertNull(entityManager.find(Image.class, mountainLake.getId()));
+        assertNull(getImage(mountainLake.getId()));
+    }
+
+    @Test
+    void deleteImageWhenItIsTheLastInSlideShow() {
+        //
+        var slideShow = persistSingleImageSlideShow();
+        var currentSlideShowImage = getCurrentSlideShowImage(slideShow.getId());
+
+        // When
+        restClient
+            .delete()
+            .uri("http://localhost:%d/image/%d".formatted(port, currentSlideShowImage.getImageId()))
+            .retrieve()
+            .toEntity(Void.class);
+
+        // Then
+        assertEquals(0, getSortedSlideShowImages(slideShow.getId()).size());
+        assertNull(entityManager.find(SlideShow.class, slideShow.getId()));
+        assertNull(getImage(currentSlideShowImage.getImageId()));
     }
 
     @Test
     void deleteImageWhichIsActiveImageInSlideShow() {
         // Given
         var slideShow = persistSlideShow();
-        var activeImage = slideShow.getActiveImage();
+        var currentSlideShowImage = getCurrentSlideShowImage(slideShow.getId());
 
         // When
         restClient
             .delete()
-            .uri("http://localhost:%d/image/%d".formatted(port, activeImage.getId()))
+            .uri("http://localhost:%d/image/%d".formatted(port, currentSlideShowImage.getImageId()))
             .retrieve()
             .toEntity(Void.class);
 
         // Then
-        assertNull(entityManager.find(Image.class, activeImage.getId()));
-        var result = entityManager.find(SlideShow.class, slideShow.getId());
-        assertEquals("birds", result.getActiveImage().getName());
+        assertEquals(2, getSortedSlideShowImages(slideShow.getId()).size());
+        var result = getCurrentSlideShowImage(slideShow.getId());
+        assertEquals("birds", getImage(result.getImageId()).getName());
+        assertNull(getImage(currentSlideShowImage.getImageId()));
     }
 
     @Test
     void deleteSlideShow() {
         // Given
-        var persistedSlideShow = persistSlideShow();
-        var imageIds = persistedSlideShow.getImages().stream().map(Image::getId);
+        var slideShow = persistSlideShow();
+        var imageIds = getSortedSlideShowImages(slideShow.getId()).stream().map(SlideShowImage::getImageId).toList();
 
         // When
         restClient
             .delete()
-            .uri("http://localhost:%d/slideshow/%d".formatted(port, persistedSlideShow.getId()))
+            .uri("http://localhost:%d/slideshow/%d".formatted(port, slideShow.getId()))
             .retrieve()
             .toEntity(Void.class);
 
         // Then
-        assertNull(entityManager.find(SlideShow.class, persistedSlideShow.getId()));
+        assertNull(entityManager.find(SlideShow.class, slideShow.getId()));
+        assertEquals(0, getSortedSlideShowImages(slideShow.getId()).size());
         // Ensure that all connected images still remain in DB
-        imageIds.forEach(imageId -> {
-            var image = entityManager
-                .createQuery("SELECT i FROM Image i LEFT JOIN FETCH i.slideShows WHERE i.id = :id", Image.class)
-                .setParameter("id", imageId)
-                .getSingleResult();
-            assertNotNull(image);
-            assertTrue(image.getSlideShows().isEmpty());
-        });
+        var images = entityManager
+            .createQuery("SELECT i FROM Image i WHERE i.id in :ids", Image.class)
+            .setParameter("ids", imageIds)
+            .getResultList();
+        assertEquals(3, images.size());
     }
 
     private Image persistImage(String url) {
@@ -284,13 +306,57 @@ class SlideshowApplicationTests {
     private SlideShow persistSlideShow() {
         return transactionTemplate.execute(tx -> {
             var slideShow = new SlideShow();
-            slideShow.addImage(new Image(BEACH, 10));
-            slideShow.addImage(new Image(BIRDS, 15));
-            slideShow.addImage(new Image(BUTTERFLY, 20));
-            slideShow.setActiveImage(slideShow.getImages().stream().findFirst().orElseThrow());
             entityManager.persist(slideShow);
+
+            var images = List.of(
+                new Image(BEACH, 10),
+                new Image(BIRDS, 15),
+                new Image(BUTTERFLY, 20)
+            );
+            images.forEach(entityManager::persist);
+
+            var slideShowImages = images
+                .stream()
+                .map(it -> new SlideShowImage(new SlideShowImage.PK(slideShow.getId(), it.getId())))
+                .toList();
+            slideShowImages.getFirst().setCurrent(true);
+            slideShowImages.forEach(entityManager::persist);
 
             return slideShow;
         });
+    }
+
+    private SlideShow persistSingleImageSlideShow() {
+        return transactionTemplate.execute(tx -> {
+            var slideShow = new SlideShow();
+            entityManager.persist(slideShow);
+
+            var image = new Image(BEACH, 10);
+            entityManager.persist(image);
+
+            var slideShowImage = new SlideShowImage(new SlideShowImage.PK(slideShow.getId(), image.getId()));
+            slideShowImage.setCurrent(true);
+            entityManager.persist(slideShowImage);
+
+            return slideShow;
+        });
+    }
+
+    private List<SlideShowImage> getSortedSlideShowImages(Integer slideShowId) {
+        return entityManager
+            .createQuery("select ssi from SlideShowImage ssi where ssi.pk.slideShowId = :slideShowId order by ssi.createdAt", SlideShowImage.class)
+            .setParameter("slideShowId", slideShowId)
+            .getResultList();
+    }
+
+    private SlideShowImage getCurrentSlideShowImage(Integer slideShowId) {
+        return entityManager
+            .createQuery("select ssi from SlideShowImage ssi where ssi.pk.slideShowId = :slideShowId and ssi.isCurrent is true", SlideShowImage.class)
+            .setParameter("slideShowId", slideShowId)
+            .getSingleResult();
+    }
+
+    private Image getImage(Long imageId) {
+        return entityManager.find(Image.class, imageId);
     }
 }

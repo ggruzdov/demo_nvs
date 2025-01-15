@@ -13,12 +13,12 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
 
     List<Image> getAllByName(String name);
 
-    @Query("select i from Image i left join fetch i.slideShows where i.id = :id")
+    @Query("select i from Image i where i.id = :id")
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Image findByIdForUpdate(Long id);
 
     @Query(
-        "select new com.github.ggruzdov.slideshow.response.OrderedImageDetailsResponse(i.id, i.url, i.duration, ssi.createdAt, i.createdAt) " +
+        "select new com.github.ggruzdov.slideshow.response.OrderedImageDetailsResponse(i.id, i.url, i.duration, ssi.isCurrent, ssi.createdAt, i.createdAt) " +
         "from Image i join SlideShowImage ssi on i.id = ssi.pk.imageId where ssi.pk.slideShowId = :slideShowId " +
         "order by ssi.createdAt"
     )
