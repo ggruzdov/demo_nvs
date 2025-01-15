@@ -52,7 +52,7 @@ The application is available at: http://localhost:8080
 
 Database credentials:
 ```
-URL: jdbc:postgresql://localhost:5432/nvs
+URL: jdbc:postgresql://localhost:5432/slideshow
 Username: admin
 Password: password
 ```
