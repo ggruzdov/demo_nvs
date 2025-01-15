@@ -86,4 +86,3 @@ docker compose down
 ## Future Improvements
 1. Add users and make images and slideshows linked to a user
 2. Add Spring Security and some authentication/authorization
-3. Add locks to prevent concurrent updates inconsistency

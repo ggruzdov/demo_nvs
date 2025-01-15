@@ -12,7 +12,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Objects;
@@ -28,7 +30,7 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "images_id_seq")
     @SequenceGenerator(name = "images_id_seq", allocationSize = 10, sequenceName = "images_id_seq")
-    private Long id;
+    private Integer id;
 
     @Column(nullable = false)
     private String url;
@@ -37,6 +39,7 @@ public class Image {
     private String name;
 
     @Column(nullable = false)
+    @JdbcTypeCode(SqlTypes.SMALLINT)
     private Integer duration;
 
     @CreationTimestamp

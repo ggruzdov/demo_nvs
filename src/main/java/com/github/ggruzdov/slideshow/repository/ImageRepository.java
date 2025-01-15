@@ -9,13 +9,13 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ImageRepository extends JpaRepository<Image, Long> {
+public interface ImageRepository extends JpaRepository<Image, Integer> {
 
     List<Image> getAllByName(String name);
 
     @Query("select i from Image i where i.id = :id")
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Image findByIdForUpdate(Long id);
+    Image findByIdForUpdate(Integer id);
 
     @Query(
         "select new com.github.ggruzdov.slideshow.response.OrderedImageDetailsResponse(i.id, i.url, i.duration, ssi.isCurrent, ssi.createdAt, i.createdAt) " +

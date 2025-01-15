@@ -29,7 +29,7 @@ public class ProofOfPlay {
     private Long id;
 
     @Column(nullable = false)
-    private Long imageId;
+    private Integer imageId;
 
     @Column(nullable = false)
     private Integer slideShowId;
@@ -37,7 +37,7 @@ public class ProofOfPlay {
     @CreationTimestamp
     private Instant createdAt;
 
-    public ProofOfPlay(Integer slideShowId, Long imageId) {
+    public ProofOfPlay(Integer slideShowId, Integer imageId) {
         this.slideShowId = slideShowId;
         this.imageId = imageId;
     }

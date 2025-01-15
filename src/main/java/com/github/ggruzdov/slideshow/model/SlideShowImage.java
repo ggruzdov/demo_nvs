@@ -43,7 +43,7 @@ public class SlideShowImage {
         return pk.getSlideShowId();
     }
 
-    public Long getImageId() {
+    public Integer getImageId() {
         return pk.getImageId();
     }
 
@@ -58,7 +58,7 @@ public class SlideShowImage {
         private Integer slideShowId;
 
         @Column(name = "image_id", nullable = false)
-        private Long imageId;
+        private Integer imageId;
 
         @Override
         public final boolean equals(Object o) {

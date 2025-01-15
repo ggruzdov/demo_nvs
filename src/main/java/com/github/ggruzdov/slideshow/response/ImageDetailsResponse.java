@@ -5,7 +5,7 @@ import com.github.ggruzdov.slideshow.model.Image;
 import java.time.Instant;
 
 public record ImageDetailsResponse(
-    Long id,
+    Integer id,
     String url,
     Integer duration,
     Instant createdAt

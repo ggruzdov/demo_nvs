@@ -87,7 +87,7 @@ public class SlideShowService {
     }
 
     @Transactional
-    public void appendImage(Integer slideShowId, Long imageId) {
+    public void appendImage(Integer slideShowId, Integer imageId) {
         var pk = new SlideShowImage.PK(slideShowId, imageId);
         slideShowImageRepository.save(new SlideShowImage(pk));
     }
@@ -96,7 +96,7 @@ public class SlideShowService {
     // except saving the very event should be processed asynchronously.
     // However, that is a big topic and a good one to discuss.
     @Transactional
-    public void saveProofOfPlay(Integer slideShowId, Long imageId) {
+    public void saveProofOfPlay(Integer slideShowId, Integer imageId) {
         slideShowRepository.findByIdForUpdate(slideShowId).orElseThrow(
             () -> new EntityNotFoundException("Slide show with id " + slideShowId + " not found")
         );
@@ -125,7 +125,7 @@ public class SlideShowService {
     }
 
     @Transactional
-    public void deleteImage(Long id) {
+    public void deleteImage(Integer id) {
         var image = imageRepository.findByIdForUpdate(id);
         if (image == null) {
             log.info("Image {} is already deleted", id);
@@ -159,7 +159,7 @@ public class SlideShowService {
         slideShowRepository.deleteById(id);
     }
 
-    private SlideShowImage getNexSlideShowImageOrElseFirst(Integer slideShowId, Long imageId) {
+    private SlideShowImage getNexSlideShowImageOrElseFirst(Integer slideShowId, Integer imageId) {
         return slideShowImageRepository
             .getNext(slideShowId, imageId)
             .orElseGet(() -> {

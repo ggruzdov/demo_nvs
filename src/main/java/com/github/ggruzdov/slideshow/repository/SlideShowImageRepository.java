@@ -23,17 +23,17 @@ public interface SlideShowImageRepository extends JpaRepository<SlideShowImage, 
            """,
         nativeQuery = true
     )
-    Optional<SlideShowImage> getNext(Integer slideShowId, Long imageId);
+    Optional<SlideShowImage> getNext(Integer slideShowId, Integer imageId);
 
     SlideShowImage findFirstByPkSlideShowIdOrderByCreatedAt(Integer slideShowId);
 
-    List<SlideShowImage> findAllByPkImageId(Long imageId);
+    List<SlideShowImage> findAllByPkImageId(Integer imageId);
 
     SlideShowImage findByPkSlideShowIdAndIsCurrentTrue(Integer slideShowId);
 
     @Query("delete from SlideShowImage where pk.imageId = :imageId")
     @Modifying
-    void deleteAllByPkImageId(Long imageId);
+    void deleteAllByPkImageId(Integer imageId);
 
     @Query("delete from SlideShowImage where pk.slideShowId = :slideShowId")
     @Modifying

@@ -80,7 +80,7 @@ public class SlideShowController {
         description = "Append a registered in the system image to an existing slideshow"
     )
     @PostMapping(value = "/slideshow/{id}/append/{imageId}")
-    public void appendImage(@PathVariable Integer id, @PathVariable Long imageId) {
+    public void appendImage(@PathVariable Integer id, @PathVariable Integer imageId) {
         log.info("Appending image = {} to slideshow {}", imageId, id);
         slideShowService.appendImage(id, imageId);
     }
@@ -90,7 +90,7 @@ public class SlideShowController {
         description = "Removes an image and all its associated slideshow relationships"
     )
     @DeleteMapping("/image/{id}")
-    public void deleteImage(@PathVariable Long id) {
+    public void deleteImage(@PathVariable Integer id) {
         log.info("Deleting image {}", id);
         slideShowService.deleteImage(id);
     }
@@ -110,7 +110,7 @@ public class SlideShowController {
         description = "Records a proof of play event and updates the active image in a slideshow"
     )
     @PostMapping("/slideshow/{id}/proof-of-play/{imageId}")
-    public void saveProofOfPlay(@PathVariable Integer id, @PathVariable Long imageId) {
+    public void saveProofOfPlay(@PathVariable Integer id, @PathVariable Integer imageId) {
         log.info("Saving proof of play, slideShowId = {}, imageId = {} ", id, imageId);
         slideShowService.saveProofOfPlay(id, imageId);
     }

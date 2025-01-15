@@ -356,7 +356,7 @@ class SlideshowApplicationTests {
             .getSingleResult();
     }
 
-    private Image getImage(Long imageId) {
+    private Image getImage(Integer imageId) {
         return entityManager.find(Image.class, imageId);
     }
 }
